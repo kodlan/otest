@@ -12,7 +12,7 @@ public class DbSystemService {
   private static final Map<Long, DbSystem> dbSystems = new ConcurrentHashMap<>();
   private final AtomicLong dbSystemIdGenerator = new AtomicLong(1);
 
-  public DbSystem createDbSystem() {
+  public synchronized DbSystem createDbSystem() {
     Long newId = dbSystemIdGenerator.getAndIncrement();
 
     DbSystem dbSystem = new DbSystem(newId, null);
