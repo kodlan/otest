@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ public class WorkRequestService {
   public synchronized WorkRequest createWorkRequest(Long dbSystemId) {
     dbSystemService.checkLock(dbSystemId);
 
-    if (getTasksInProgress(dbSystemId) >= 5) {
+    if (findByDbSystemId(dbSystemId).size() >= 5) {
       dbSystemService.lockDbSystem(dbSystemId, LocalDateTime.now().plusMinutes(2));
       throw new IllegalStateException("Maximum concurrent WorkRequests reached. DbSystem is locked for 2 minutes.");
     }
@@ -38,24 +39,15 @@ public class WorkRequestService {
   }
 
   public List<WorkRequest> findByDbSystemId(Long dbSystemId) {
-    return dbSystemWorkRequests.getOrDefault(dbSystemId, Collections.emptyList());
-  }
-
-  private int getTasksInProgress(Long dbSystemId) {
-    List<WorkRequest> requests = dbSystemWorkRequests.getOrDefault(dbSystemId, new ArrayList<>());
-    // TODO: check tasts in progress
-    return requests.size();
+    return dbSystemWorkRequests.getOrDefault(dbSystemId, Collections.emptyList()).stream()
+        .filter(req -> LocalDateTime.now().isBefore(req.getCreatedAt().plusSeconds(req.getProcessingTime())))
+        .collect(Collectors.toList());
   }
 
   private WorkRequest createRequest() {
     Long newRequestId = workRequestIdGenerator.getAndIncrement();
     int randomProcessingTime = new Random().nextInt(61);  // 0 to 60 seconds
-
-    return new WorkRequest(
-        newRequestId,
-        LocalDateTime.now(),
-        randomProcessingTime
-    );
+    return new WorkRequest(newRequestId, LocalDateTime.now(), randomProcessingTime);
   }
 
   private void storeRequest(Long dbSystemId, WorkRequest newRequest) {
