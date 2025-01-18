@@ -8,14 +8,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Service;
 
 @Service
 public class WorkRequestService {
-  private final Map<Long, List<WorkRequest>> dbSystemWorkRequests = new HashMap<>();
+  private final Map<Long, List<WorkRequest>> dbSystemWorkRequests = new ConcurrentHashMap<>();
+  private final AtomicLong workRequestIdGenerator = new AtomicLong(1);
 
   public WorkRequest createWorkRequest(Long dbSystemId) {
-    Long newId = 1L;
+    Long newId = workRequestIdGenerator.getAndIncrement();
 
     // Random processing time between 0 and 60 seconds
     int randomProcessingTime = new Random().nextInt(61);

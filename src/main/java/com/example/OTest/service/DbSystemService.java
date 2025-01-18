@@ -1,19 +1,22 @@
 package com.example.OTest.service;
 
 import com.example.OTest.model.DbSystem;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DbSystemService {
-  private static final Map<Long, DbSystem> dbSystems = new HashMap<>();
+  private static final Map<Long, DbSystem> dbSystems = new ConcurrentHashMap<>();
+  private final AtomicLong dbSystemIdGenerator = new AtomicLong(1);
 
   public DbSystem createDbSystem() {
-    DbSystem dbSystem = new DbSystem(1L, null);
+    Long newId = dbSystemIdGenerator.getAndIncrement();
 
-    dbSystems.put(1L, dbSystem);
+    DbSystem dbSystem = new DbSystem(newId, null);
+    dbSystems.put(newId, dbSystem);
 
     return dbSystem;
   }
