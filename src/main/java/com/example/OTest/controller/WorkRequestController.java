@@ -37,10 +37,14 @@ public class WorkRequestController {
           .body("DbSystem with ID " + dbSystemId + " does not exist.");
     }
 
-    WorkRequest newRequest = workRequestService.createWorkRequest(dbSystemId);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(newRequest);
+    try {
+      WorkRequest newRequest = workRequestService.createWorkRequest(dbSystemId);
+      return ResponseEntity.status(HttpStatus.CREATED).body(newRequest);
+    } catch (IllegalStateException e) {
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
   }
 
   @GetMapping
